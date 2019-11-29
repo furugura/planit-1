@@ -49,10 +49,6 @@ export default {
     const start = new Date(localStorage.tripStart);
     const end = new Date(localStorage.tripEnd);
     this.duration = 1 + Number((end.getTime() - start.getTime())) / 86400000;
-
-    this.toCurrency = countryDetails.filter(
-      item => item.country === localStorage.country
-    )[0].currency_code;
     this.fetchUserLocationInfo().then(() => {
       this.fetchExchangeRate();
     });
@@ -98,6 +94,9 @@ export default {
         }
       );
       localStorage.a = userLocationInfo;
+      this.toCurrency = countryDetails.filter(
+        item => item.country === localStorage.country
+        )[0].currency_code;
       this.fromCurrency = userLocationInfo.data.currency.code;
     }
   },
