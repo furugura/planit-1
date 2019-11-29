@@ -6,14 +6,19 @@
           {{ item.day.split(" ")[0] + " " + item.day.split(" ")[1] }}
         </div>
         <div class="date">{{ item.day.split(" ")[2] }}</div>
-        <router-link to="/map"
+        <div class="weather" v-show="checkDate(item.unixtime, indexDay)">
+          <img
+            v-if="item.weatherIcon"
+            class="wicon"
+            :src="item.weatherIcon"
+            alt="Weather icon"
+          />
+        </div>
+        <router-link :to="`/map/${indexDay}`"
           ><img
             id="map-icon"
             src="https://img.icons8.com/ios-glyphs/30/000000/google-maps.png"
         /></router-link>
-        <div class="weather" v-show="checkDate(item.unixtime, indexDay)">
-          {{ item.weather }}
-        </div>
       </div>
       <div class="itineraryWrap">
         <button class="addBtn" v-on:click="openPopUp(indexDay)">+</button>
@@ -59,7 +64,9 @@ export default {
     days: [],
     duration: localStorage.duration,
     startDate: localStorage.tripStart,
-    endDate: localStorage.tripEnd
+    endDate: localStorage.tripEnd,
+    countryCode: localStorage.countryCode,
+    city: localStorage.city
   }),
   mounted() {
     this.createDays(this.duration);
@@ -90,7 +97,7 @@ export default {
                 "f8458b1c78msh0cabb0870fc79a6p1d44adjsn84de5db4361c"
             },
             params: {
-              q: "san francisco,us",
+              q: `${this.city},${this.countryCode}`,
               cnt: "17"
             }
           }
@@ -98,14 +105,23 @@ export default {
         .then(response => {
           this.weather = response.data;
           localStorage.weather = response.data;
+        })
+        .catch(error => {
+          this.weather = error;
         });
     },
     checkDate(day, index) {
-      this.weather.list.forEach(item => {
-        if (item.dt - 24 * 60 * 60 < day && day <= item.dt) {
-          this.days[index].weather = item.weather[0].main;
-        }
-      });
+      if (this.weather) {
+        this.weather.list.forEach(item => {
+          if (item.dt <= day && day < item.dt + 24 * 60 * 60) {
+            this.days[index].weather = item.weather[0].main;
+            this.days[index].weatherIcon =
+              "http://openweathermap.org/img/w/" +
+              item.weather[0].icon +
+              ".png";
+          }
+        });
+      }
       return true;
     },
     openPopUp(index) {
@@ -119,6 +135,7 @@ export default {
       const selectedIndex = this.selectedButton;
       this.showPopUp = false;
       this.days[selectedIndex].itinerary.push({ text: plan });
+      localStorage.days = JSON.stringify(this.days);
     },
     deleteItinerary(indexDay, indexItinerary) {
       this.days[indexDay].itinerary.splice(indexItinerary, 1);
@@ -242,6 +259,9 @@ export default {
 }
 button:focus {
   outline: 0;
+}
+.weather {
+  line-height: 15px;
 }
 @media screen and (max-width: 480px) {
   .contents {
